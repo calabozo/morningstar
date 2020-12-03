@@ -67,15 +67,8 @@ class MorningStar():
                 df_all = df_all.merge(df,on="date", how="outer")
         return df_all
 
-def main():
-    m=MorningStar()
-    ticket_data=m.get_historical_data_from_ISIN("LU1328852659")
-    print(ticket_data.head())
-    
-
 
 if __name__ == '__main__':
-    main() 
     funds="""
 LU1328852659
 LU1050470373
