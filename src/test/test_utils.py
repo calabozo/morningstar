@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from pyfunds.utils import calc_roi, calc_var, calc_annual_return, calc_annual_var
 
-
 @pytest.fixture
 def df_fake():
     df_fake = pd.DataFrame({'date': pd.date_range(start='2010-01-07', end='2020-12-31', freq='D'),

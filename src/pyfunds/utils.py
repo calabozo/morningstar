@@ -11,7 +11,7 @@ def _calc_window_function(df_fund, num_days, func):
     cols = df_fund.columns[df_fund.columns != 'date']
 
     df_w = pd.concat([df_fund[col].rolling(window=num_days).apply(func, raw=True) for col in cols], axis=1)
-    df_w = df_w.dropna(how='all')
+    df_w = df_w.replace([np.inf, -np.inf], np.nan).dropna(how='all')
     return df_w
 
 

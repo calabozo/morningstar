@@ -5,19 +5,20 @@ import datetime
 from datetime import datetime as dt
 import pandas as pd
 
+
 class MorningStar():
     def __init__(self):
         pass
 
-    def get_ticket(self, ISIN:str, errors='ignore') -> dict:
+    def get_ticket(self, ISIN: str, errors='ignore') -> dict:
         url = f"https://lt.morningstar.com/api/rest.svc/klr5zyak8x/security/screener?page=1&pageSize=10&sortOrder=LegalName%20asc&outputType=json&version=1&languageId=es-ES&currencyId=EUR&universeIds=FOESP%24%24ALL&securityDataPoints=SecId%7CName%7CPriceCurrency%7CTenforeId%7CLegalName%7CClosePrice%7CYield_M12%7CCategoryName%7CAnalystRatingScale%7CStarRatingM255%7CQuantitativeRating%7CSustainabilityRank%7CReturnD1%7CReturnW1%7CReturnM1%7CReturnM3%7CReturnM6%7CReturnM0%7CReturnM12%7CReturnM36%7CReturnM60%7CReturnM120%7CFeeLevel%7CManagerTenure%7CMaxDeferredLoad%7CInitialPurchase%7CFundTNAV%7CEquityStyleBox%7CBondStyleBox%7CAverageMarketCapital%7CAverageCreditQualityCode%7CEffectiveDuration%7CMorningstarRiskM255%7CAlphaM36%7CBetaM36%7CR2M36%7CStandardDeviationM36%7CSharpeM36%7CTrackRecordExtension&filters=&term={ISIN}"
         r = requests.get(url)
         if r.status_code != 200:
             raise Exception(f"Error, unexpected HTTP response code: {r.status_code}")
 
         json_r = r.json()['rows']
-        if len(json_r)!=1:
-            if errors is 'ignore':
+        if len(json_r) != 1:
+            if errors == 'ignore':
                 return None
             else:
                 raise Exception(f"Error ticket not found")
@@ -25,51 +26,62 @@ class MorningStar():
         ticket = json_r[0]
         return ticket
 
-    def get_historical_data_from_ticket(self, ticket: dict, 
-            start_date: datetime.date, end_date: datetime.date=None, currency: str=None):
-        
+    def get_historical_data_from_ticket(self, ticket: dict,
+                                        start_date: datetime.date, end_date: datetime.date = None,
+                                        currency: str = None):
+
         security_id = ticket["SecId"]
         if currency is None:
             currency = ticket["PriceCurrency"]
         if end_date is None:
             end_date = datetime.date.today()
-        start_date_str=dt.strftime(start_date,"%Y-%m-%d")
-        end_date_str=dt.strftime(end_date,"%Y-%m-%d")
+        start_date_str = dt.strftime(start_date, "%Y-%m-%d")
+        end_date_str = dt.strftime(end_date, "%Y-%m-%d")
 
-        url=f"https://tools.morningstar.es/api/rest.svc/timeseries_cumulativereturn/2nhcdckzon?id={security_id}&currencyId={currency}&frequency=daily&startDate={start_date_str}&endDate={end_date_str}&outputType=COMPACTJSON"
+        url = f"https://tools.morningstar.es/api/rest.svc/timeseries_cumulativereturn/2nhcdckzon?id={security_id}&currencyId={currency}&frequency=daily&startDate={start_date_str}&endDate={end_date_str}&outputType=COMPACTJSON"
         r = requests.get(url)
         if r.status_code != 200:
             raise Exception(f"Error, unexpected HTTP response code: {r.status_code}")
-        json_txt=f"""{{"columns":["date","value"], "data":{r.text} }}"""
+        json_txt = f"""{{"columns":["date","value"], "data":{r.text} }}"""
         # Pandas is smart enought to convert the timestamp into date automatically because the column is called date
         df = pd.read_json(json_txt, orient='split')
         return df
 
-
-
     def get_historical_data_from_ISIN(self, ISIN: str,
-            start_date: datetime.date=dt(2018,1,1), currency=None ) -> pd.DataFrame:
+                                      start_date: datetime.date = dt(2018, 1, 1),
+                                      currency: str = None) -> pd.DataFrame:
         ticket = self.get_ticket(ISIN)
         if ticket is None:
             return None
 
         data = self.get_historical_data_from_ticket(ticket, start_date, currency=currency)
-        return data.rename(columns = {'value':ISIN})
+        return data.rename(columns={'value': ISIN}).set_index('date')
 
-
-    def get_historical_data_ISIN_list(self, ISINs: list, currency=None, start_date: datetime.date=dt(2018,1,1)):
+    def get_historical_data_ISIN_list(self, ISINs: list,
+                                      currency: str = None,
+                                      start_date: datetime.date = dt(2018, 1, 1),
+                                      save_to_disk_filename: str = None):
         df_all = None
         for isin in ISINs:
-            df = self.get_historical_data_from_ISIN(isin,currency=currency,start_date=start_date)
+            df = self.get_historical_data_from_ISIN(isin, currency=currency, start_date=start_date)
             if df_all is None:
                 df_all = df
             elif df is not None:
-                df_all = df_all.merge(df,on="date", how="outer")
+                df_all = df_all.merge(df, on="date", how="outer")
+
+        if save_to_disk_filename is not None:
+            self.save_to_disk(df_all, save_to_disk_filename)
         return df_all
+
+    def save_to_disk(self, df_values, filename):
+        return df_values.to_parquet(filename)
+
+    def read_from_dist(self, filename):
+        return pd.read_parquet(filename)
 
 
 if __name__ == '__main__':
-    funds="""
+    funds = """
 LU1328852659
 LU1050470373
 LU0389812933
