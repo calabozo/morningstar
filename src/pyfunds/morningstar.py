@@ -45,6 +45,7 @@ class MorningStar():
         json_txt = f"""{{"columns":["date","value"], "data":{r.text} }}"""
         # Pandas is smart enought to convert the timestamp into date automatically because the column is called date
         df = pd.read_json(json_txt, orient='split')
+        df.value=(df.value+100)
         return df
 
     def get_historical_data_from_ISIN(self, ISIN: str,
@@ -59,7 +60,7 @@ class MorningStar():
 
     def get_historical_data_ISIN_list(self, ISINs: list,
                                       currency: str = None,
-                                      start_date: datetime.date = dt(2018, 1, 1),
+                                      start_date: datetime.date = dt(2000, 1, 1),
                                       save_to_disk_filename: str = None):
         df_all = None
         for isin in ISINs:
