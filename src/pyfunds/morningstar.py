@@ -41,7 +41,7 @@ def get_historical_data_from_ticket(ticket: dict,
     if r.status_code != 200:
         raise Exception(f"Error, unexpected HTTP response code: {r.status_code}")
     json_txt = f"""{{"columns":["date","value"], "data":{r.text} }}"""
-    # Pandas is smart enought to convert the timestamp into date automatically because the column is called date
+    # Pandas is smart enough to convert the timestamp into date automatically because the column is called date
     df = pd.read_json(json_txt, orient='split')
     df.value = (df.value + 100)
     return df
