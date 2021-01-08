@@ -22,7 +22,7 @@ class ForecastFX:
 
         self.filename = csv_file
         if csv_file is not None and os.path.isfile(csv_file):
-            self.df_forecast = pd.read_csv(csv_file, index_col="date")
+            self.df_forecast = pd.read_csv(csv_file)
         else:
             self.df_forecast = pd.DataFrame(columns=self.columns)
 
@@ -46,7 +46,6 @@ class ForecastFX:
         df_forecast_today = pd.DataFrame(table_out, columns=self.columns)
         today = datetime.date.today()
         df_forecast_today["date"] = dt.strftime(today, "%Y-%m-%d")
-        df_forecast_today = df_forecast_today.set_index("date")
         return df_forecast_today
 
     def get_new_asset(self):
@@ -62,12 +61,11 @@ class ForecastFX:
         table_data = [[cell.text for cell in row("td")]
                       for row in html_data]
         df_data=self._parse_table_data(table_data)
-        self.df_forecast = pd.concat([self.df_forecast, df_data]).drop_duplicates()
-        self.df_forecast.index.name = df_data.index.name
+        self.df_forecast = pd.concat([self.df_forecast, df_data]).drop_duplicates(subset=["name","date"])
         return df_data
 
 
 
     def save(self):
-        self.df_forecast.to_csv(self.filename, index=True)
+        self.df_forecast.to_csv(self.filename, index=False)
 

@@ -4,7 +4,7 @@ import json
 import datetime
 from datetime import datetime as dt
 import pandas as pd
-from valueinfo import ValueInfo
+from .valueinfo import ValueInfo
 
 
 def get_ticket(ISIN: str, errors='ignore') -> dict:
