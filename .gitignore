@@ -133,3 +133,4 @@ dmypy.json
 .idea
 *.rds
 *.csv
+*.parquet

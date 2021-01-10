@@ -25,7 +25,7 @@ class ValueInfo:
         df_fund = df.sort_values(by='date', axis='index', ascending=True)
         cols = df_fund.columns[df_fund.columns != 'date']
 
-        df_w = pd.concat([df_fund[col].rolling(window=num_days).apply(func, raw=True) for col in cols], axis=1)
+        df_w = pd.concat([df_fund[col].rolling(window=f"{num_days}D").apply(func, raw=True) for col in cols], axis=1)
         df_w = df_w.replace([np.inf, -np.inf], np.nan).dropna(how='all')
         return df_w
 

@@ -61,7 +61,7 @@ def test_get_historical_data_ISIN_list():
     v = ValueInfo(df_values)
     df_weekly_return, _ = v.calc_roi_var(num_days=7)
     mean_values = df_weekly_return.mean(skipna=True)
-    assert df_weekly_return.shape[0] <= 365 - 6
+    assert df_weekly_return.shape[0] <= 365
     assert df_weekly_return.shape[1] == len(isins)
     assert all(mean_values.between(0.5 , 1.5))
 
