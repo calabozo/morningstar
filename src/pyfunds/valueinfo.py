@@ -43,3 +43,6 @@ class ValueInfo:
         df_roi = self.__calc_window_function(self.df_values, period_days, _roi)
         df_annual_roi = df_roi.groupby(df_roi.index.year).var()
         return df_annual_roi
+
+    def _sort(self):
+        self.df_values = self.df_values.sort_values(by='date', axis='index', ascending=True)
