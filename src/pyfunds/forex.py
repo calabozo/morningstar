@@ -127,10 +127,15 @@ class Forex(ValueInfo):
 
     def summary(self,resolution='D'):
         # https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
-        df_forex = self.df_forex
+        df_forex = self.df_values
         df_forex["trunc_date"]=df_forex.index.floor(resolution)
-        df_forex.groupby("trunc_date").agg({"open":first(),"high":max(),"low":min(),"close":last, volume:sum())
-        pass
+        df_forex = df_forex.groupby("trunc_date").agg(
+            {"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
+
+        fx = Forex(fx_base=self.fx_base, fx_trade=self.fx_trade)
+        fx.df_values = df_forex
+        return fx
+
 
     def get_forex(self):
         return self.df_values

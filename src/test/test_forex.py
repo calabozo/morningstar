@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime as dt
-
+import pandas as pd
 from pyfunds import Forex, ValueInfo
 
 
@@ -59,3 +59,27 @@ def test_forex_2019():
     assert df_values.shape[1] == 5
     assert all(df_values.index.month.unique().sort_values() == [1,2,3,4,5,6,7,8,9,10,11,12])
     assert all(df_values.index.year.unique().sort_values() == [2019,2020])
+
+
+def test_summary():
+    fx = Forex(fx_base="EUR", fx_trade="USD")
+    df_fake = pd.DataFrame({'date': pd.date_range(start='2020-01-01', end='2020-01-02 23:00', freq='H'),
+                            'open': 1, 'high': 1, 'low': 1, 'close': 1, 'volume': 1})
+    df_fake = df_fake.set_index("date")
+    df_fake.loc[df_fake.index == "2020-01-01 01:00:00", "high"] = 2
+    df_fake.loc[df_fake.index == "2020-01-01 23:00:00", "high"] = 3
+    df_fake.loc[df_fake.index == "2020-01-01 23:00:00", "volume"] = 2
+    df_fake.loc[df_fake.index == "2020-01-01 12:00:00", "low"] = 0.9
+    df_fake.loc[df_fake.index == "2020-01-01 23:00:00", "close"] = 0.9
+    df_fake.loc[df_fake.index == "2020-01-02 00:00:00", "open"] = 0.8
+    df_fake.loc[df_fake.index == "2020-01-02 00:00:00", "high"] = 1.2
+    fx.df_values = df_fake
+    df_summary = fx.summary(resolution='D').get_forex()
+    assert df_summary[df_summary.index == "2020-01-01"].open.iloc[0] == 1
+    assert df_summary[df_summary.index == "2020-01-01"].high.iloc[0] == 3
+    assert df_summary[df_summary.index == "2020-01-01"].low.iloc[0] == 0.9
+    assert df_summary[df_summary.index == "2020-01-01"].volume.iloc[0] == 25
+    assert df_summary[df_summary.index == "2020-01-02"].open.iloc[0] == 0.8
+    assert df_summary[df_summary.index == "2020-01-02"].high.iloc[0] == 1.2
+    assert df_summary[df_summary.index == "2020-01-02"].low.iloc[0] == 1
+    assert df_summary[df_summary.index == "2020-01-02"].close.iloc[0] == 1
