@@ -46,3 +46,10 @@ class ValueInfo:
 
     def _sort(self):
         self.df_values = self.df_values.sort_values(by='date', axis='index', ascending=True)
+
+    def get_data(self, max_date=None):
+        if max_date is None:
+            return self.df_values
+        else:
+            return self.df_values[self.df_values.index<=max_date]
+
