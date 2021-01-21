@@ -15,7 +15,7 @@ def test_build_orders():
     assert "ERROR: Last order date" in str(order_exception.value)
     orders.add_sell_order("2020-01-06")
 
-    assert orders.orders.shape == (4, 2)
+    assert orders.orders.shape == (4, 3)
 
 
 def test_simulation():
