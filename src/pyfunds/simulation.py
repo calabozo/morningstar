@@ -18,7 +18,7 @@ class OrderType(Enum):
 class Orders:
 
     def __init__(self, buy_fee=0, sell_fee=0):
-        self.orders = pd.DataFrame(columns=["date", "type","confidence"])
+        self.orders = pd.DataFrame(columns=["date", "type", "confidence"])
         self.buy_fee = 0
         self.sell_fee = 0
 
@@ -29,7 +29,8 @@ class Orders:
                 print(f"Warning: Last order date:{last_order.date} was of type {last_order.type}")
             if last_order.date >= date:
                 raise WrongOrderDateException(f"ERROR: Last order date:{last_order.date}")
-        self.orders = self.orders.append({"date": date, "type": order_type, "confidence":confidence}, ignore_index=True)
+        self.orders = self.orders.append({"date": date, "type": order_type, "confidence": confidence},
+                                         ignore_index=True)
 
     def add_buy_order(self, date, confidence=1.0):
         self.add_order(pd.to_datetime(date), OrderType.BUY, confidence)
@@ -44,12 +45,11 @@ class Orders:
         return OrdersIterator(self)
 
     def __str__(self):
-        out="Orders:"
+        out = "Orders:"
         for order in self:
-            out=f"{out}\n{order.date} - {order.type}[{order.confidence}]"
+            out = f"{out}\n{order.date} - {order.type}[{order.confidence}]"
 
         return out
-
 
 
 class OrdersIterator:
@@ -72,40 +72,40 @@ class OrdersIterator:
 
 class Simulation:
 
-    def __init__(self, valueinfo: ValueInfo, col):
-        self.valueinfo = valueinfo
-        self.valueinfo._sort()
+    def __init__(self, value_info: ValueInfo, col):
+        self.value_info = value_info
+        self.value_info._sort()
         self.column = col
-        self.df_sim = pd.DataFrame(columns=["date_buy", "date_sell","confidence" ,"buy","sell","roi","accum_roi"])
+        self.df_sim = pd.DataFrame(columns=["date_buy", "date_sell", "confidence", "buy", "sell", "roi", "accum_roi"])
 
     def calc_for_orders(self, orders: OrderType, confidence=1.0):
         total_inc = 1
         buy_value = None
         buy_date = None
 
-
         for order in orders:
-            diff_days = (self.valueinfo.df_values.index - order["date"]).total_seconds()
-            value = self.valueinfo.df_values[diff_days >= 0].iloc[0][self.column]
-            if order.type == OrderType.BUY and order.confidence>=confidence:
+            diff_days = (self.value_info.df_values.index - order["date"]).total_seconds()
+            value = self.value_info.df_values[diff_days >= 0].iloc[0][self.column]
+            if order.type == OrderType.BUY and order.confidence >= confidence:
                 buy_value = value
                 buy_date = order.date
-            elif order.type == OrderType.SELL and order.confidence>=confidence:
+            elif order.type == OrderType.SELL and order.confidence >= confidence:
                 if buy_date is None:
                     raise WrongOrderDateException(f"ERROR: Sell order before buy")
 
-                total_inc = total_inc * value/buy_value
-                self.df_sim = self.df_sim.append({"date_buy": buy_date, "date_sell": order.date, "confidence":confidence, 
-                    "buy":buy_value, "sell":value, "roi":value/buy_value, "accum_roi":total_inc}, ignore_index=True)
+                total_inc = total_inc * value / buy_value
+                self.df_sim = self.df_sim.append(
+                    {"date_buy": buy_date, "date_sell": order.date, "confidence": confidence,
+                     "buy": buy_value, "sell": value, "roi": value / buy_value, "accum_roi": total_inc},
+                    ignore_index=True)
                 buy_date = None
         return total_inc
 
     def __str__(self):
-        out="Simulation:"
+        out = "Simulation:"
         nrows = self.df_sim.shape[0]
         for i in range(nrows):
             row = self.df_sim.iloc[i]
-            out=f"{out}\n BUY date:{row.date_buy} at {row.buy} - SELL date:{row.date_sell} at {row.sell} - ROI: {round(row.roi,2)} ACC_ROI: {round(row.accum_roi,2)}"
+            out = f"{out}\n BUY date:{row.date_buy} at {row.buy} - SELL date:{row.date_sell} at {row.sell} - ROI: {round(row.roi, 2)} ACC_ROI: {round(row.accum_roi, 2)}"
 
         return out
-

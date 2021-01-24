@@ -55,6 +55,8 @@ class MorningStar(ValueInfo):
         df_values = None
         if ISINs is not None:
             df_values = self.__get_historical_data_ISIN_list(ISINs, currency, start_date)
+            if df_values is None:
+                raise Exception("ERROR: No fund found!")
         ValueInfo.__init__(self, df_values)
 
     def _get_historical_data_from_ISIN(self, ISIN: str,

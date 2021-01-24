@@ -1,6 +1,6 @@
 import pytest
 from pyfunds.robots import CrazyMonkey, MovingAverage
-from pyfunds import ValueInfo
+from pyfunds import ValueInfo, MorningStar
 import pandas as pd
 import numpy as np
 from datetime import datetime as dt
@@ -8,7 +8,6 @@ import pyfunds.simulation as simulation
 
 
 def test_crazy_monkey():
-
     df_fake = pd.DataFrame({'date': pd.date_range(start='2020-01-01', end='2020-01-11', freq='D'), 'myval': 7})
     df_fake = df_fake.set_index("date")
     df_fake.loc[df_fake.index == "2020-01-01", "myval"] = 10
@@ -24,10 +23,10 @@ def test_crazy_monkey():
     df_fake = df_fake.dropna()
     values = ValueInfo(df_fake)
 
-    crazy_monkey = CrazyMonkey(0)
-    assert crazy_monkey.calc_buy_order(values)==True
-    assert crazy_monkey.calc_sell_order(values)==True
-    orders = crazy_monkey.test(values, from_date=dt(2020,1,1), to_date=dt(2020,1,11))
+    crazy_monkey = CrazyMonkey(values, column_value="myval", p_rate=0)
+    assert crazy_monkey.calc_buy_order(None) == True
+    assert crazy_monkey.calc_sell_order(None) == True
+    orders = crazy_monkey.test(from_date=dt(2020, 1, 1), to_date=dt(2020, 1, 11))
     assert orders.get_num_orders() == 10
     print(orders)
 
@@ -38,8 +37,13 @@ def test_crazy_monkey():
 
 
 def test_moving_average():
-    ma = MovingAverage(short_period=5, long_period=100)
-    
-    m = MorningStar(ISINs="IE00B4K9F548")
+    isins = ["IE00B4K9F548"]
+    m = MorningStar(ISINs=isins)
+    ma = MovingAverage(value_info=m, column_value=isins[0], short_period=5, long_period=100)
+    orders = ma.test( from_date=dt(2020, 1, 1), to_date=dt(2020, 12, 31))
+    assert orders.get_num_orders() > 0
 
-
+    sim = simulation.Simulation(m, col=isins[0])
+    roi = sim.calc_for_orders(orders)
+    assert roi > 0
+    print(sim)
