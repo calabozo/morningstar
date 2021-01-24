@@ -1,5 +1,5 @@
 import pytest
-from pyfunds.robots import CrazyMonkey
+from pyfunds.robots import CrazyMonkey, MovingAverage
 from pyfunds import ValueInfo
 import pandas as pd
 import numpy as np
@@ -35,4 +35,11 @@ def test_crazy_monkey():
     roi = sim.calc_for_orders(orders)
     print(sim)
     assert roi > 1.0
+
+
+def test_moving_average():
+    ma = MovingAverage(short_period=5, long_period=100)
+    
+    m = MorningStar(ISINs="IE00B4K9F548")
+
 
