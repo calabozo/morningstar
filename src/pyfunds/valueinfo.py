@@ -23,10 +23,10 @@ class ValueInfo:
 
     def __calc_window_function(self, df, num_days, func):
         df_fund = df.sort_values(by='date', axis='index', ascending=True)
-        cols = df_fund.columns[df_fund.columns != 'date']
 
-        df_w = pd.concat([df_fund[col].rolling(window=f"{num_days}D").apply(func, raw=True) for col in cols], axis=1)
-        df_w = df_w.replace([np.inf, -np.inf], np.nan).dropna(how='all')
+        df_w = df_fund.rolling(window=f"{num_days}D").apply(func, raw=True)
+        df_w = df_w[df_w.index >= df_fund.index[0] + pd.Timedelta(num_days - 1, unit='D')]. \
+            replace([np.inf, -np.inf], np.nan).dropna(how='all')
         return df_w
 
     def calc_roi_var(self, num_days=365):
