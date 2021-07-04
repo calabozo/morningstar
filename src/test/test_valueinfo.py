@@ -26,6 +26,17 @@ def test_roi(foo_info):
     assert pytest.approx(df_roi['fund4'].var(), 1e-10) == 0
     assert pytest.approx(df_roi.loc['2015-01-31', 'fund4'], 0.01) == 1.037
 
+def test_roi_charges(foo_info):
+    df_roi, _ = foo_info.calc_roi_var(annual_charges_percentage=5)
+    assert foo_info.df_values.shape == (4012, 4)
+    assert df_roi.shape == (4012 - 364, 4)
+    assert all(df_roi['fund1'] == 0.95)
+    assert all(df_roi['fund2'] == 0.95)
+    assert df_roi['fund3'].mean() < 1.01
+    assert df_roi['fund3'].var() > 0
+    assert pytest.approx(df_roi['fund4'].var(), 1e-10) == 0
+    assert pytest.approx(df_roi.loc['2015-01-31', 'fund4'], 0.01) == 0.987
+
 
 def test_var(foo_info):
     _, df_var = foo_info.calc_roi_var()

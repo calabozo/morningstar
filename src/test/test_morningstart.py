@@ -2,8 +2,8 @@ import pytest
 from datetime import datetime as dt
 
 from pyfunds import MorningStar, ValueInfo
-from pyfunds.morningstar import get_ticket, get_historical_data_from_ticket
-
+from pyfunds.morningstar import get_ticket, get_historical_data_from_ticket, get_key_stats_from_ticket
+import numpy as np
 
 def test_get_ticket():
     ticket = get_ticket(ISIN="IE00B4K9F548")
@@ -13,6 +13,11 @@ def test_get_ticket():
     assert ticket['LegalName'] == 'iShares Europe Index Fund (IE) Institutional Acc EUR'
     assert ticket['StarRatingM255'] >= 0
     assert ticket['QuantitativeRating'] >= 0
+
+def test_key_stats_from_ticket():
+    ticket = get_key_stats_from_ticket(SecId="F00000O3W4")
+    assert ticket['Charge'] == 0.29
+    assert ticket['ISIN'] == 'IE00B4K9F548'
 
 
 def test_get_historical_data_from_ticket():
@@ -46,6 +51,7 @@ def test_get_historical_data_from_ISIN():
 
 def test_get_historical_data_ISIN_list():
     isins = ["IE00B4K9F548", "LU0389812933", "LU0996180864"]
+    num_days_roi = 7
     start_date = dt(2019, 1, 1)
     m = MorningStar(ISINs=isins, start_date=start_date, currency='EUR')
 
@@ -58,10 +64,17 @@ def test_get_historical_data_ISIN_list():
     assert pytest.approx(df_values[isins[1]].mean(), 0.01) == 103.5381
     assert pytest.approx(df_values[isins[2]].mean(), 0.01) == 112.159
 
-    v = ValueInfo(df_values)
-    df_weekly_return, _ = v.calc_roi_var(num_days=7)
+    assert m.tickets['IE00B4K9F548']['Charge'] > 0
+    assert m.tickets['LU0389812933']['Charge'] > 0
+
+    assert all(np.array(m.get_annual_charges()) > 0)
+
+    df_weekly_return, _ = m.calc_roi_var(num_days=num_days_roi)
+    df_weekly_return_no_charge, _ = m.calc_roi_var(num_days=num_days_roi, annual_charges_percentage=[0, 0, 0])
+
     mean_values = df_weekly_return.mean(skipna=True)
-    assert df_weekly_return.shape[0] <= 365
+    assert df_weekly_return.shape[0] == (m.df_values.shape[0]-num_days_roi+1)
     assert df_weekly_return.shape[1] == len(isins)
     assert all(mean_values.between(0.5 , 1.5))
+    assert (df_weekly_return_no_charge.dropna().values >= df_weekly_return.dropna().values).all()
 

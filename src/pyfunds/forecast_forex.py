@@ -6,13 +6,15 @@ import bs4 as bs
 import datetime
 from datetime import datetime as dt
 import os.path
+import time
+from deprecated import deprecated
 
 IDX_COL_AVG = 3
 IDX_COL_BIAS = 10
 
 
 
-
+@deprecated(reason="Remove dependency from dryscrape")
 class ForecastFX:
 
     url = "https://www.fxstreet.com/rates-charts/forecast"
@@ -51,9 +53,17 @@ class ForecastFX:
     def get_new_asset(self):
         dryscrape.start_xvfb()
         sess = dryscrape.Session()
-        sess.set_attribute('auto_load_images', False)
+        sess.set_header('user-agent',
+                        'Mozilla/5.0 (Windows NT 6.4; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2225.0 Safari/537.36')
+        sess.set_error_tolerant(True)
+        sess.set_attribute('auto_load_images', True)
         sess.visit(self.url)
-        sess.wait_for(lambda: sess.at_xpath("//section[contains(@class, 'fxs_widget_summary')]"),timeout=30)
+        time.sleep(3)
+        button = sess.at_xpath('//*[(@class = "fxs_prestitial-continue")]')
+        button.click()
+        #javascript:dismissPrestitial();
+        #fxs_prestitial-continue
+        sess.wait_for(lambda: sess.at_xpath("//section[contains(@class, 'fxs_widget_summary')]"),timeout=60)
         source = sess.body()
 
         soup = bs.BeautifulSoup(source, "html.parser")

@@ -3,8 +3,11 @@ library(zoo,quietly=TRUE, warn.conflicts=FALSE)
 library(reshape2,quietly=TRUE, warn.conflicts=FALSE)
 library(pracma,quietly=TRUE, warn.conflicts=FALSE)
 
-calc_roi <- function(df, num_days=365){
+calc_roi <- function(df, num_days=365, annual_charges_percentage=NULL){
     df  %>% arrange(date) %>% mutate_at(vars(-date),~./lag(.,num_days))
+    if (!is.null(annual_charges_percentage)){
+        df<-df-repmat(as.matrix(annual_charges_percentage,nrow=1),nrow(df),1)*num_days/365/100
+    }
 }
 calc_consecutive_losses <- function(df_roi,max_days_with_losses=150){
     df <- df_roi %>% select(-date) %>% mutate_all(~.<1)

@@ -21,7 +21,7 @@ class ValueInfo:
     def read_from_dist(self, filename):
         self.df_values = pd.read_parquet(filename)
 
-    def __calc_window_function(self, df, num_days, func):
+    def _calc_window_function(self, df, num_days, func):
         df_fund = df.sort_values(by='date', axis='index', ascending=True)
 
         df_w = df_fund.rolling(window=f"{num_days}D").apply(func, raw=True)
@@ -29,18 +29,21 @@ class ValueInfo:
             replace([np.inf, -np.inf], np.nan).dropna(how='all')
         return df_w
 
-    def calc_roi_var(self, num_days=365):
-        self.df_roi = self.__calc_window_function(self.df_values, num_days, _roi)
-        self.df_var = self.__calc_window_function(self.df_roi, num_days, np.nanvar)
+    def calc_roi_var(self, num_days=365, annual_charges_percentage=0):
+        charges = annual_charges_percentage * num_days / 365 /100
+        self.df_roi = self._calc_window_function(self.df_values, num_days, _roi)
+        self.df_roi = self.df_roi - charges
+
+        self.df_var = self._calc_window_function(self.df_roi, num_days, np.nanvar)
         return self.df_roi, self.df_var
 
     def calc_annual_return(self):
-        df_roi = self.__calc_window_function(self.df_values, 365, _roi)
+        df_roi, _ = self.calc_roi_var(365)
         df_annual_roi = df_roi.groupby(df_roi.index.year).last()
         return df_annual_roi
 
     def calc_annual_var(self, period_days=2):
-        df_roi = self.__calc_window_function(self.df_values, period_days, _roi)
+        df_roi, _ = self.calc_roi_var(period_days)
         df_annual_roi = df_roi.groupby(df_roi.index.year).var()
         return df_annual_roi
 
