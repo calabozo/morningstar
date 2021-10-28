@@ -8,6 +8,7 @@ calc_roi <- function(df, num_days=365, annual_charges_percentage=NULL){
     if (!is.null(annual_charges_percentage)){
         df<-df-repmat(as.matrix(annual_charges_percentage,nrow=1),nrow(df),1)*num_days/365/100
     }
+    df
 }
 calc_consecutive_losses <- function(df_roi,max_days_with_losses=150){
     df <- df_roi %>% select(-date) %>% mutate_all(~.<1)
